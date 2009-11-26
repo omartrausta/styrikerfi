@@ -8,6 +8,8 @@ const int EMPTY_FAT_ENTRY = -1; // Indicates block is empty and available
 const int LAST_FAT_ENTRY = -2; // Indicator for FAT table, last block holding given file
 const int MAX_FILES = 35; // the maximum number of files the filesystem can hold
 bool fileIsOpen = false;
+int numberOfSavedFiles = 0;
+int numberOfUsedBlocks = 0;
 
 
 // entry in fileDirectory
@@ -85,8 +87,10 @@ void vformat()
 	//Write FAT Table and File Directory into Virtual Disk
 	fseek(virtualDiskSpace,0,SEEK_SET);
 	fwrite(fatTable,BLOCK_SIZE,1,virtualDiskSpace);
+	numberOfUsedBlocks++;
 	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
 	fwrite(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
+	numberOfUsedBlocks++;
 
 	/*
 	fatEntry *buffer;
@@ -124,9 +128,11 @@ int vopen(char* filename)
 	{
 		if(strcmp(fileDirectory[i].name,filename))
 		{
-			print("file found\n");
+			printf("file found\n");
+			fileNotFound = false;
 			
 		}
+		i++;
 
 	}
 
@@ -139,6 +145,10 @@ int vopen(char* filename)
 // filename and size of file as input parameters
 void vsave(char *filename, int filesize)
 {
+	//how many blocks are required for file
+	int nBlocksNeeded = (float)filesize/(float)BLOCK_SIZE+0.9999;
+	printf("Number of blocks: %i\n",nBlocksNeeded);
+
 
 }
 
@@ -170,11 +180,11 @@ void vlist()
 // Testing filesystem functions
 int main()
 {
-
 	printf("starting main\n");
 	//vinit("disk.data");
 	vformat();
-	vopen("file.data");
+	//vopen("file.data");
+	vsave("file.data",4000);
 	printf("press ENTER to exit main\n");
 	getchar();
 	return EXIT_SUCCESS;
