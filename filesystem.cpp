@@ -23,7 +23,7 @@ typedef struct
 } fatEntry;
 
 
-FILE* virtualDiskSpace;
+FILE* virtualDiskSpace = NULL;
 fatEntry* fatTable[255];
 fileEntry* fileDirectory;
 
@@ -31,7 +31,18 @@ fileEntry* fileDirectory;
 
 int vinit(char* diskname)
 {
-	virtualDiskSpace = fopen(diskname,"w");
+	char* buffer;
+	int i;
+
+	virtualDiskSpace = fopen(diskname,"wb+");
+	if (virtualDiskSpace == NULL)
+	{
+		printf("cannot open file");
+		return 1;
+	}
+
+
+
 
 	return 0;
 }
@@ -76,6 +87,7 @@ int main()
 {
 
 	printf("running");
+	vinit("disk.data");
 	getchar();
 	return EXIT_SUCCESS;
 }
