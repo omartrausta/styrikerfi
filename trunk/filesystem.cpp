@@ -4,9 +4,11 @@ using namespace std;
 
 const int BLOCK_SIZE = 1024;
 const int BLOCK_QTY = 256;
-const int EMPTY_FAT_ENTRY = -1;
-const int LAST_FAT_ENTRY = -2;
-const int MAX_FILES = 35;
+const int EMPTY_FAT_ENTRY = -1; // Indicates block is empty and available
+const int LAST_FAT_ENTRY = -2; // Indicator for FAT table, last block holding given file
+const int MAX_FILES = 35; // the maximum number of files the filesystem can hold
+bool fileIsOpen = false;
+
 
 // entry in fileDirectory
 typedef struct
@@ -31,7 +33,8 @@ fatEntry *fatTable;
 fileEntry *fileDirectory;
 
 
-
+// Sets up virtual disk, if file exsits its opened 
+// otherwise it is created, diskname is submitted as input parameter
 void vinit(char* diskname)
 {
 	char* buffer;
@@ -53,6 +56,8 @@ void vinit(char* diskname)
 
 }
 
+// Formats the virtual disk, if disk is not open it is created using defult filename
+// also sets up the FAT table and file directory and saves into first two blocks
 void vformat()
 {
 	int i;
@@ -83,23 +88,61 @@ void vformat()
 	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
 	fwrite(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
 
+	/*
 	fatEntry *buffer;
 	buffer = (fatEntry*) calloc(1,sizeof(fatEntry)*BLOCK_QTY);
 
+	
 	fseek(virtualDiskSpace,0,SEEK_SET);
 	fread(buffer,BLOCK_SIZE,1,virtualDiskSpace);
 	printf("Buffer: %i \n",sizeof(buffer));
 	printf("%i\n",buffer[0].nextBlock);
+	*/
 
 
 }
 
+// Opens a saved file on the virtual disk and prepares for reading or writing
 int vopen(char* filename)
 {
+	int i=2;
+	bool fileNotFound = true;
 
-	return 0;
+	if(virtualDiskSpace == NULL)
+	{
+		printf("Virtual disk not initilized, please set up disk\n");
+		return -1;
+	}
+	if(fileIsOpen)
+	{
+		printf("A file is already open, please close current open file\n");
+		return -2;
+	}
+
+	//check if filenname is found if file dierectory
+	while(i < MAX_FILES && fileNotFound)
+	{
+		if(strcmp(fileDirectory[i].name,filename))
+		{
+			print("file found\n");
+			
+		}
+
+	}
+
+	
+	return -1;
+	
 }
 
+// Saves a new file to virtual disk
+// filename and size of file as input parameters
+void vsave(char *filename, int filesize)
+{
+
+}
+
+// Close a open file, save changes to virtual disk
 void vclose(int fd)
 {
 
@@ -124,12 +167,14 @@ void vlist()
 
 }
 
+// Testing filesystem functions
 int main()
 {
 
 	printf("starting main\n");
 	//vinit("disk.data");
 	vformat();
+	vopen("file.data");
 	printf("press ENTER to exit main\n");
 	getchar();
 	return EXIT_SUCCESS;
