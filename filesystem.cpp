@@ -31,6 +31,7 @@ fileEntry* fileDirectory;
 
 int vinit(char* diskname)
 {
+	virtualDiskSpace = fopen(diskname,"w");
 
 	return 0;
 }
