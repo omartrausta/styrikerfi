@@ -2,6 +2,8 @@
 #include <cstdlib>
 using namespace std;
 
+const int BLOCK_SIZE = 1024;
+const int BLOCK_QTY = 256;
 
 // entry in fileDirectory
 typedef struct
@@ -29,7 +31,7 @@ fileEntry* fileDirectory;
 
 
 
-int vinit(char* diskname)
+void vinit(char* diskname)
 {
 	char* buffer;
 	int i;
@@ -37,20 +39,24 @@ int vinit(char* diskname)
 	virtualDiskSpace = fopen(diskname,"wb+");
 	if (virtualDiskSpace == NULL)
 	{
-		printf("cannot open file");
-		return 1;
+		printf("cannot open file\n");
 	}
+	else
+	{
+		buffer = (char*) calloc(1,BLOCK_SIZE);
+		for (i=0; i < BLOCK_QTY; i++)
+		{
+			fwrite(buffer,BLOCK_SIZE,1,virtualDiskSpace);
+		}
+		free(buffer);
 
-
-
-
-	return 0;
+	}
 }
 
-int vformat()
+void vformat()
 {
 
-	return 0;
+
 }
 
 int vopen(char* filename)
@@ -59,10 +65,10 @@ int vopen(char* filename)
 	return 0;
 }
 
-int vclose(int fd)
+void vclose(int fd)
 {
 
-	return 0;
+
 }
 
 int vread(int fd, int n, char *buffer)
@@ -77,17 +83,18 @@ int vwrite(int fd, int n, char *buffer)
 	return 0;
 }
 
-int vlist()
+void vlist()
 {
 
-	return 0;
+
 }
 
 int main()
 {
 
-	printf("running");
+	printf("running\n");
 	vinit("disk.data");
+	printf("press ENTER to exit\n");
 	getchar();
 	return EXIT_SUCCESS;
 }
