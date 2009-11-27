@@ -4,7 +4,7 @@ using namespace std;
 
 const int BLOCK_SIZE = 1024;
 const int BLOCK_QTY = 256;
-const int EMPTY_FAT_ENTRY = -1; // Indicates block is empty and available
+const int EMPTY_ENTRY = -1; // Indicates block is empty and available
 const int LAST_FAT_ENTRY = -2; // Indicator for FAT table, last block holding given file
 const int MAX_FILES = 35; // the maximum number of files the filesystem can hold
 bool fileIsOpen = false;
@@ -78,11 +78,15 @@ void vformat()
 	fatTable[1].nextBlock = LAST_FAT_ENTRY; // Stores file directory
 	for(i=2; i < BLOCK_QTY; i++)
 	{
-		fatTable[i].nextBlock = EMPTY_FAT_ENTRY;
+		fatTable[i].nextBlock = EMPTY_ENTRY;
 	}
 	
 	//Initilazing File Directory table for entry into Block 1 in virtudalDiskspace
 	fileDirectory = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
+	for(i=0; i < MAX_FILES; i++)
+	{
+		fileDirectory[i].firstBlock = EMPTY_ENTRY;
+	}
 
 	//Write FAT Table and File Directory into Virtual Disk
 	fseek(virtualDiskSpace,0,SEEK_SET);
@@ -91,6 +95,9 @@ void vformat()
 	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
 	fwrite(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
 	numberOfUsedBlocks++;
+
+	free(fatTable);
+	free(fileDirectory);
 
 	/*
 	fatEntry *buffer;
@@ -122,6 +129,7 @@ int vopen(char* filename)
 		printf("A file is already open, please close current open file\n");
 		return -2;
 	}
+	
 
 	//check if filenname is found if file dierectory
 	while(i < MAX_FILES && fileNotFound)
@@ -143,12 +151,74 @@ int vopen(char* filename)
 
 // Saves a new file to virtual disk
 // filename and size of file as input parameters
-void vsave(char *filename, int filesize)
+bool vsave(char *filename, int filesize)
 {
-	//how many blocks are required for file
-	int nBlocksNeeded = (float)filesize/(float)BLOCK_SIZE+0.9999;
-	printf("Number of blocks: %i\n",nBlocksNeeded);
+	int i = 2;
+	bool firstBlockNotFound = true;
+	bool fileDirEntryNotFound = true;
+	fatEntry *fatTableBuffer;
+	fileEntry *fileDirectoryBuffer;
 
+	//how many blocks are required for file
+	int nBlocksNeeded = (float)filesize/(float)BLOCK_SIZE+0.9;
+
+	//check if a disk is initilized
+	if(virtualDiskSpace == NULL)
+	{
+		printf("Virtual disk not initilized, please set up disk\n");
+		return false;
+	}
+
+	//check if enough space or number of blocks are available on virtual disk
+	if(nBlocksNeeded > BLOCK_QTY-numberOfUsedBlocks)
+	{
+		printf("not enough space available on disk to save file");
+		return false;
+	}
+	//check if file directory is full and more files cannot be added
+	if(MAX_FILES == numberOfSavedFiles)
+	{
+		printf("file directory full, cannot save more files to directory");
+		return false;
+	}
+
+	//open fat table saved on virtual disk
+	fatTableBuffer = (fatEntry*) calloc(1,sizeof(fatEntry)*BLOCK_QTY);
+	fseek(virtualDiskSpace,0,SEEK_SET);
+	fread(fatTableBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+
+	//open file directory saved on virtual disk
+	fileDirectoryBuffer = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
+	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+
+
+	//find first empty file directory element
+	while (i < MAX_FILES && fileDirEntryNotFound)
+	{
+		if(fileDirectoryBuffer[i].firstBlock == EMPTY_ENTRY)
+		{
+
+			fileDirEntryNotFound = false;
+		}
+		i++;
+	}
+
+
+	//find first empty block for start of file
+	while (i < BLOCK_QTY && firstBlockNotFound)
+	{
+		if(fatTableBuffer[i].nextBlock == EMPTY_ENTRY)
+		{
+
+			firstBlockNotFound = false;
+		}
+		i++;
+	}
+
+
+
+	return true;
 
 }
 
@@ -180,6 +250,17 @@ void vlist()
 // Testing filesystem functions
 int main()
 {
+	/*int i = 2;
+	int max = 10;
+	bool logic = true;
+
+	while(i < max && logic)
+	{
+		printf("logic");
+		logic = false;
+	}*/
+
+
 	printf("starting main\n");
 	//vinit("disk.data");
 	vformat();
