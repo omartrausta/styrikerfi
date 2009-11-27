@@ -154,10 +154,12 @@ int vopen(char* filename)
 bool vsave(char *filename, int filesize)
 {
 	int i = 2;
+	int j = 0;
 	bool firstBlockNotFound = true;
 	bool fileDirEntryNotFound = true;
 	fatEntry *fatTableBuffer;
 	fileEntry *fileDirectoryBuffer;
+	int fileDirEntry = -1;
 
 	//how many blocks are required for file
 	int nBlocksNeeded = (float)filesize/(float)BLOCK_SIZE+0.9;
@@ -194,14 +196,14 @@ bool vsave(char *filename, int filesize)
 
 
 	//find first empty file directory element
-	while (i < MAX_FILES && fileDirEntryNotFound)
+	while (j < MAX_FILES && fileDirEntryNotFound)
 	{
-		if(fileDirectoryBuffer[i].firstBlock == EMPTY_ENTRY)
+		if(fileDirectoryBuffer[j].firstBlock == EMPTY_ENTRY)
 		{
-
+			fileDirEntry = j;
 			fileDirEntryNotFound = false;
 		}
-		i++;
+		j++;
 	}
 
 
@@ -210,11 +212,16 @@ bool vsave(char *filename, int filesize)
 	{
 		if(fatTableBuffer[i].nextBlock == EMPTY_ENTRY)
 		{
-
+			fileDirectoryBuffer[fileDirEntry].firstBlock = i;
+			fileDirectoryBuffer[fileDirEntry].fileSize = filesize;
+			fileDirectoryBuffer[fileDirEntry].name[0] = *filename;
 			firstBlockNotFound = false;
 		}
 		i++;
 	}
+
+	//find next available blocks and note block order in FAT table
+
 
 
 
@@ -250,6 +257,7 @@ void vlist()
 // Testing filesystem functions
 int main()
 {
+	//char testname[20] = "hallo";
 	/*int i = 2;
 	int max = 10;
 	bool logic = true;
