@@ -224,18 +224,20 @@ bool vsave(char *filename, int filesize)
 	}
 
 	//find next available blocks and note block order in FAT table, note last block as LAST_FAT_ENTRY
-	while (i < BLOCK_QTY && nBlocksNeeded <= 0)
+	while (i < BLOCK_QTY && nBlocksNeeded >= 0)
 	{
-		if(fatTableBuffer[i].nextBlock == EMPTY_ENTRY && nBlocksNeeded < 0)
+		if(fatTableBuffer[i].nextBlock == EMPTY_ENTRY && nBlocksNeeded > 0)
 		{
 			fatTableBuffer[lastBlock].nextBlock = i;
 
-			nBlocksNeeded--;
+			lastBlock = i;
 		}
 		if(nBlocksNeeded == 0)
 		{
 			fatTableBuffer[lastBlock].nextBlock = LAST_FAT_ENTRY;
+
 		}
+		nBlocksNeeded--;
 		i++;
 	}
 
@@ -320,10 +322,12 @@ int main()
 
 
 	printf("starting main\n");
-	//vinit("disk.data");
+	vinit("disk.data");
 	vformat();
 	//vopen("file.data");
-	vsave("file.data",400);
+	vsave("file1.data",4000);
+	vsave("file2.data",400);
+	vsave("file3.data",400);
 	printf("press ENTER to exit main\n");
 	getchar();
 	return EXIT_SUCCESS;
