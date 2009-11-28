@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdlib>
+#include <string.h>
 using namespace std;
 
 const int BLOCK_SIZE = 1024;
@@ -136,16 +137,13 @@ int vopen(char* filename)
 	{
 		if(strcmp(fileDirectory[i].name,filename))
 		{
-			printf("file found\n");
-			fileNotFound = false;
-			
+			printf("file %s found\n",fileDirectory[i].name,filename);
+			fileNotFound = false;			
 		}
 		i++;
-
 	}
 
-	
-	return -1;
+	return i;
 	
 }
 
@@ -160,6 +158,7 @@ bool vsave(char *filename, int filesize)
 	fatEntry *fatTableBuffer;
 	fileEntry *fileDirectoryBuffer;
 	int fileDirEntry = -1;
+	int lastBlock = 0;
 
 	//how many blocks are required for file
 	int nBlocksNeeded = (float)filesize/(float)BLOCK_SIZE+0.9;
@@ -168,19 +167,21 @@ bool vsave(char *filename, int filesize)
 	if(virtualDiskSpace == NULL)
 	{
 		printf("Virtual disk not initilized, please set up disk\n");
+
+		//return false indicating file was unable to be saved succesfully
 		return false;
 	}
 
 	//check if enough space or number of blocks are available on virtual disk
 	if(nBlocksNeeded > BLOCK_QTY-numberOfUsedBlocks)
 	{
-		printf("not enough space available on disk to save file");
+		printf("not enough space available on disk to save file\n");
 		return false;
 	}
 	//check if file directory is full and more files cannot be added
 	if(MAX_FILES == numberOfSavedFiles)
 	{
-		printf("file directory full, cannot save more files to directory");
+		printf("file directory full, cannot save more files to directory\n");
 		return false;
 	}
 
@@ -214,17 +215,42 @@ bool vsave(char *filename, int filesize)
 		{
 			fileDirectoryBuffer[fileDirEntry].firstBlock = i;
 			fileDirectoryBuffer[fileDirEntry].fileSize = filesize;
-			fileDirectoryBuffer[fileDirEntry].name[0] = *filename;
+			memcpy(fileDirectoryBuffer[fileDirEntry].name,filename,sizeof(fileDirectoryBuffer[fileDirEntry].name));
 			firstBlockNotFound = false;
+			nBlocksNeeded--;
+			lastBlock = i;
 		}
 		i++;
 	}
 
-	//find next available blocks and note block order in FAT table
+	//find next available blocks and note block order in FAT table, note last block as LAST_FAT_ENTRY
+	while (i < BLOCK_QTY && nBlocksNeeded <= 0)
+	{
+		if(fatTableBuffer[i].nextBlock == EMPTY_ENTRY && nBlocksNeeded < 0)
+		{
+			fatTableBuffer[lastBlock].nextBlock = i;
 
+			nBlocksNeeded--;
+		}
+		if(nBlocksNeeded == 0)
+		{
+			fatTableBuffer[lastBlock].nextBlock = LAST_FAT_ENTRY;
+		}
+		i++;
+	}
 
+	//save FAT table and file directory to file
+	fseek(virtualDiskSpace,0,SEEK_SET);
+	fwrite(fatTableBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	fwrite(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 
+	free(fatTableBuffer);
+	free(fileDirectoryBuffer);
 
+	numberOfSavedFiles++;
+
+	//return true inicating file was saved succesfully
 	return true;
 
 }
@@ -268,12 +294,36 @@ int main()
 		logic = false;
 	}*/
 
+	/*
+	int *array1;
+	array1 = (int*) calloc(1,sizeof(int)*8);
+	array1[0]=1;
+	array1[1]=2;
+	array1[2]=3;
+	
+	printf("array1 stak 2: %i\n",array1[2]);
+
+	int array2[8];
+
+	memcpy(array2,array1,sizeof(array2));
+
+	//array2 = array1;
+
+	printf("array2 stak 2: %i\n",array2[2]);
+	*/
+
+
+
+
+
+
+
 
 	printf("starting main\n");
 	//vinit("disk.data");
 	vformat();
 	//vopen("file.data");
-	vsave("file.data",4000);
+	vsave("file.data",400);
 	printf("press ENTER to exit main\n");
 	getchar();
 	return EXIT_SUCCESS;
