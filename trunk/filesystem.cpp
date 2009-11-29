@@ -114,9 +114,9 @@ void vformat()
 		fseek(virtualDiskSpace,i,SEEK_SET);
 		fwrite(buffer,BLOCK_SIZE,1,virtualDiskSpace);
 	}
+
 	free(buffer);
 
-	//printf("Size of FAT: %i\n",sizeof(fatTable[0]));
 	fatTable[0].nextBlock = LAST_FAT_ENTRY; // Stores FAT table
 	fatTable[1].nextBlock = LAST_FAT_ENTRY; // Stores file directory
 	for(i=2; i < BLOCK_QTY; i++)
@@ -131,30 +131,10 @@ void vformat()
 	}
 
 	//Write FAT Table and File Directory into Virtual Disk
-	//fseek(virtualDiskSpace,0,SEEK_SET);
-	//fwrite(fatTable,BLOCK_SIZE,1,virtualDiskSpace);
 	writeFat();
 	numberOfUsedBlocks++;
-	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
-	//fwrite(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
 	writeDir();
 	numberOfUsedBlocks++;
-
-	//free(fatTable);
-	//free(fileDirectory);
-
-	/*
-	fatEntry *buffer;
-	buffer = (fatEntry*) calloc(1,sizeof(fatEntry)*BLOCK_QTY);
-
-	
-	fseek(virtualDiskSpace,0,SEEK_SET);
-	fread(buffer,BLOCK_SIZE,1,virtualDiskSpace);
-	printf("Buffer: %i \n",sizeof(buffer));
-	printf("%i\n",buffer[0].nextBlock);
-	*/
-
-
 }
 
 // Opens a saved file on the virtual disk and prepares for reading or writing
@@ -163,7 +143,6 @@ int vopen(char* filename)
 	int i=0;
 	int fileNumber;
 	bool fileNotFound = true;
-	//fileEntry *fileDirectoryBuffer;
 
 	if(virtualDiskSpace == NULL)
 	{
@@ -177,9 +156,6 @@ int vopen(char* filename)
 	}
 
 	//open file directory saved on virtual disk
-	//fileDirectoryBuffer = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
-	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
-	//fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	readDir();
 	
 	//check if filenname is found in file dierectory
@@ -200,13 +176,9 @@ int vopen(char* filename)
 		return -3;
 	}
 
-	//DEV NOTE: VISUAL STUDIO MAY THROW BREAKBPOINT, CONTINUE WILL COMPLETE PROGRAM RUN SUCCESSFULLY
-	//free(fileDirectoryBuffer);
-
 	//return file number reference for location of file within filesystem, mark file as open
 	fileIsOpen = true;
-	return fileNumber;
-	
+	return fileNumber;	
 }
 
 // Saves a new file to virtual disk
@@ -217,8 +189,6 @@ bool vsave(char *filename, int filesize)
 	int j = 0;
 	bool firstBlockNotFound = true;
 	bool fileDirEntryNotFound = true;
-	//fatEntry *fatTableBuffer;
-	//fileEntry *fileDirectoryBuffer;
 	int fileDirEntry = -1;
 	int lastBlock = 0;
 
@@ -249,15 +219,9 @@ bool vsave(char *filename, int filesize)
 	}
 
 	//open fat table saved on virtual disk
-	//fatTableBuffer = (fatEntry*) calloc(1,sizeof(fatEntry)*BLOCK_QTY);
-	//fseek(virtualDiskSpace,0,SEEK_SET);
-	//fread(fatTableBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	readFat();
 
 	//open file directory saved on virtual disk
-	//fileDirectoryBuffer = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
-	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
-	//fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	readDir();
 
 	//check if file already exists with same filename
@@ -319,21 +283,13 @@ bool vsave(char *filename, int filesize)
 	}
 
 	//save FAT table and file directory to file
-	//fseek(virtualDiskSpace,0,SEEK_SET);
-	//fwrite(fatTableBuffer,BLOCK_SIZE,1,virtualDiskSpace);
-	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
-	//fwrite(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	writeFat();
 	writeDir();
-
-	//free(fatTableBuffer);
-	//free(fileDirectoryBuffer);
 
 	numberOfSavedFiles++;
 
 	//return true inicating file was saved succesfully
 	return true;
-
 }
 
 // Close a open file, save changes to virtual disk
@@ -382,17 +338,6 @@ void exit()
 // Testing filesystem functions
 int main()
 {
-	//char testname[20] = "hallo";
-	/*int i = 2;
-	int max = 10;
-	bool logic = true;
-
-	while(i < max && logic)
-	{
-		printf("logic");
-		logic = false;
-	}*/
-
 	/*
 	int *array1;
 	array1 = (int*) calloc(1,sizeof(int)*8);
@@ -411,13 +356,7 @@ int main()
 	printf("array2 stak 2: %i\n",array2[2]);
 	*/
 
-
 	int filePos = -1;
-
-
-
-
-
 
 	printf("starting filesystem\n");
 	vinit("disk2.data");
