@@ -75,8 +75,6 @@ void writeDir()
 // Initilaze memory location for fatTable and fileDirectory
 void vinit(char* diskname)
 {
-	int i;
-
 	virtualDiskSpace = fopen(diskname,"rb+");
 	if (virtualDiskSpace == NULL)
 	{
@@ -158,7 +156,7 @@ int vopen(char* filename)
 	//open file directory saved on virtual disk
 	readDir();
 	
-	//check if filenname is found in file dierectory
+	//check if filenname is found in file directory
 	while(i < MAX_FILES && fileNotFound)
 	{
 		if(strcmp(fileDirectory[i].name,filename) == 0)
@@ -247,7 +245,7 @@ bool vsave(char *filename, int filesize)
 		j++;
 	}
 
-	//find first empty block for start of file
+	//find first empty block for start of file, marsk as first block in FAT table
 	while (i < BLOCK_QTY && firstBlockNotFound)
 	{
 		if(fatTable[i].nextBlock == EMPTY_ENTRY)
@@ -292,7 +290,7 @@ bool vsave(char *filename, int filesize)
 	return true;
 }
 
-// Close a open file, save changes to virtual disk
+// Close a open file
 void vclose(int fd)
 {
 	fileIsOpen = false;
@@ -308,6 +306,23 @@ int vread(int fd, int n, char *buffer)
 
 int vwrite(int fd, int n, char *buffer)
 {
+	//check if a file is open
+	if(!fileIsOpen)
+	{
+		printf("No file is open to write into\n");
+		return -1;
+	}
+
+	//check if number of bytes in buffer is more than the size of file
+	if(fileDirectory[fd].fileSize > n)
+	{
+		printf("Dataset to write is larger than file can hold\n");
+		return -2;
+	}
+	
+
+
+
 
 	return 0;
 }
@@ -321,7 +336,7 @@ void vlist()
 
 	for(i=0;i < MAX_FILES; i++)
 	{
-		if(fileDirectory[i].firstBlock != EMPTY_ENTRY)
+		if(strcmp(fileDirectory[i].name,"") != 0)
 		{
 			printf("%s\n",fileDirectory[i].name);
 		}
@@ -339,22 +354,22 @@ void exit()
 int main()
 {
 	/*
-	int *array1;
-	array1 = (int*) calloc(1,sizeof(int)*8);
-	array1[0]=1;
-	array1[1]=2;
-	array1[2]=3;
+	char *array1;
+	array1 = (char*) calloc(1,sizeof(char)*10);
+	array1 = "HalloHallo";
 	
-	printf("array1 stak 2: %i\n",array1[2]);
+	printf("array1 stak 2: %s\n",array1);
 
-	int array2[8];
+	char array2[10];
 
-	memcpy(array2,array1,sizeof(array2));
+	memcpy(array2,array1,2);
 
-	//array2 = array1;
+	array2[2]='\n';
 
-	printf("array2 stak 2: %i\n",array2[2]);
+	printf("array2 stak 2: %s\n",array2);
 	*/
+	
+
 
 	int filePos = -1;
 
