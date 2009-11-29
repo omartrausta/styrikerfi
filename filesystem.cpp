@@ -34,6 +34,7 @@ typedef struct
 FILE *virtualDiskSpace = NULL;
 fatEntry *fatTable;
 fileEntry *fileDirectory;
+char *dataBuffer;
 
 
 // Helper functions for reading and writing FAT and File Directory to and from filesystem
@@ -88,6 +89,9 @@ void vinit(char* diskname)
 	//Initilazing File Directory table for entry into Block 1 in virtudalDiskspace
 	fileDirectory = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
 
+	//Initilazing Data Buffer
+	dataBuffer = (char*) calloc(1,sizeof(char)*BLOCK_SIZE);
+
 }
 
 // Formats the virtual disk, if disk is not open it is created using defult filename
@@ -109,7 +113,7 @@ void vformat()
 	buffer = (char*) calloc(1,BLOCK_SIZE);
 	for (i=0; i < BLOCK_QTY; i++)
 	{
-		fseek(virtualDiskSpace,i,SEEK_SET);
+		fseek(virtualDiskSpace,i*BLOCK_SIZE,SEEK_SET);
 		fwrite(buffer,BLOCK_SIZE,1,virtualDiskSpace);
 	}
 
@@ -306,6 +310,10 @@ int vread(int fd, int n, char *buffer)
 
 int vwrite(int fd, int n, char *buffer)
 {
+	int i = 0;
+	int writeToBlock;
+	bool continueWrite = true;
+
 	//check if a file is open
 	if(!fileIsOpen)
 	{
@@ -320,7 +328,27 @@ int vwrite(int fd, int n, char *buffer)
 		return -2;
 	}
 	
+	writeToBlock = fileDirectory[fd].firstBlock;
 
+
+	while(continueWrite)
+	{
+		//fill dataBuffer with first 1024 char for first block
+		strncpy(dataBuffer,buffer+i*BLOCK_SIZE,BLOCK_SIZE);
+
+
+		fseek(virtualDiskSpace,writeToBlock,SEEK_SET);
+		fwrite(dataBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+
+		writeToBlock = fatTable[writeToBlock].nextBlock;
+
+		if(writeToBlock == LAST_FAT_ENTRY)
+		{
+			continueWrite = false;
+		}
+
+		i++;
+	}
 
 
 
@@ -348,28 +376,45 @@ void exit()
 {
 	free(fatTable);
 	free(fileDirectory);
+	free(dataBuffer);
 }
 
 // Testing filesystem functions
 int main()
 {
 	/*
+	int i;
+	
 	char *array1;
 	array1 = (char*) calloc(1,sizeof(char)*10);
 	array1 = "HalloHallo";
 	
 	printf("array1 stak 2: %s\n",array1);
 
-	char array2[10];
+	char *array2;
+	array2 = (char*) calloc(1,sizeof(char)*11);
+	for (i=0; i < 10; i++)
+	{
+		array2[i]='A';
+	}
 
-	memcpy(array2,array1,2);
+	strncpy(array2,array1+0*sizeof(char),2);
 
-	array2[2]='\n';
+	//array2 = array1+3*sizeof(char);
+
+	//array2[4]='\n';
+	//memcpy(array2,array1,2);
+
+	
+	
+	//+6*sizeof(char)='\n';
 
 	printf("array2 stak 2: %s\n",array2);
 	*/
 	
 
+	char *array1;
+	array1 = (char*) calloc(1,sizeof(char)*4000);
 
 	int filePos = -1;
 
@@ -380,9 +425,14 @@ int main()
 	vsave("file1.data",4000);
 	vsave("file2.data",400);
 	vsave("file3.data",400);
-	filePos = vopen("file3.data");
+	filePos = vopen("file1.data");
 	printf("File is found at: %i\n",filePos);
 	vlist();
+
+	vwrite(filePos,4000,array1);
+
+
+
 	printf("\npress ENTER to exit filesystem\n");
 	exit();
 	getchar();
