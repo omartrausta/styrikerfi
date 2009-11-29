@@ -138,7 +138,6 @@ int vopen(char* filename)
 	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
 	fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	
-
 	//check if filenname is found in file dierectory
 	while(i < MAX_FILES && fileNotFound)
 	{
@@ -151,15 +150,11 @@ int vopen(char* filename)
 		i++;
 	}
 	
-
 	if(fileNotFound)
 	{
 		printf("File could not be found\n");
 		return -3;
 	}
-
-	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
-	//fwrite(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 
 	//DEV NOTE: VISUAL STUDIO MAY THROW BREAKBPOINT, CONTINUE WILL COMPLETE PROGRAM RUN SUCCESSFULLY
 	//free(fileDirectoryBuffer);
@@ -201,6 +196,7 @@ bool vsave(char *filename, int filesize)
 		printf("not enough space available on disk to save file\n");
 		return false;
 	}
+
 	//check if file directory is full and more files cannot be added
 	if(MAX_FILES == numberOfSavedFiles)
 	{
@@ -229,7 +225,6 @@ bool vsave(char *filename, int filesize)
 		}
 		j++;
 	}
-
 
 	//find first empty block for start of file
 	while (i < BLOCK_QTY && firstBlockNotFound)
@@ -260,6 +255,8 @@ bool vsave(char *filename, int filesize)
 			fatTableBuffer[lastBlock].nextBlock = LAST_FAT_ENTRY;
 
 		}
+
+		numberOfUsedBlocks++;
 		nBlocksNeeded--;
 		i++;
 	}
@@ -299,11 +296,44 @@ int vwrite(int fd, int n, char *buffer)
 	return 0;
 }
 
+// Displays all filenames in filesystem
 void vlist()
 {
 
 
 }
+
+// Helper functions for reading and writing FAT and File Directory to and from filesystem
+// Used by other functions
+
+void readFat()
+{
+	fatTable = (fatEntry*) calloc(1,sizeof(fatEntry)*BLOCK_QTY);
+	fseek(virtualDiskSpace,0,SEEK_SET);
+	fread(fatTable,BLOCK_SIZE,1,virtualDiskSpace);
+}
+
+void writeFat()
+{
+	fseek(virtualDiskSpace,0,SEEK_SET);
+	fwrite(fatTable,BLOCK_SIZE,1,virtualDiskSpace);
+	free(fatTable);
+}
+
+void readDir()
+{
+	fileDirectory = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
+	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	fread(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
+}
+
+void writeDir()
+{
+	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	fwrite(fileDirectory,BLOCK_SIZE,1,virtualDiskSpace);
+	free(fileDirectory);
+}
+
 
 // Testing filesystem functions
 int main()
@@ -352,7 +382,7 @@ int main()
 	vsave("file1.data",4000);
 	vsave("file2.data",400);
 	vsave("file3.data",400);
-	filePos = vopen("file4.data");
+	filePos = vopen("file1.data");
 	printf("File is found at: %i\n",filePos);
 	printf("press ENTER to exit main\n");
 	getchar();
