@@ -159,6 +159,7 @@ int vopen(char* filename)
 
 	//open file directory saved on virtual disk
 	readDir();
+	readFat();
 	
 	//check if filenname is found in file directory
 	while(i < MAX_FILES && fileNotFound)
@@ -236,7 +237,6 @@ bool vsave(char *filename, int filesize)
 		}
 	}
 
-
 	//find first empty file directory element
 	j = 0;
 	while (j < MAX_FILES && fileDirEntryNotFound)
@@ -298,8 +298,6 @@ bool vsave(char *filename, int filesize)
 void vclose(int fd)
 {
 	fileIsOpen = false;
-
-
 }
 
 int vread(int fd, int n, char *buffer)
@@ -328,7 +326,7 @@ int vread(int fd, int n, char *buffer)
 	while(continueRead)
 	{
 		//write data buffer to specified block on virtual disk
-		fseek(virtualDiskSpace,readFromBlock,SEEK_SET);
+		fseek(virtualDiskSpace,readFromBlock*BLOCK_SIZE,SEEK_SET);
 		fread(dataBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 
 		//fill dataBuffer with first 1024 char for first block
@@ -379,7 +377,7 @@ int vwrite(int fd, int n, char *buffer)
 		strncpy(dataBuffer,buffer+i*BLOCK_SIZE,BLOCK_SIZE);
 
 		//write data buffer to specified block on virtual disk
-		fseek(virtualDiskSpace,writeToBlock,SEEK_SET);
+		fseek(virtualDiskSpace,writeToBlock*BLOCK_SIZE,SEEK_SET);
 		fwrite(dataBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 
 		//find next block to write
@@ -416,46 +414,15 @@ void vlist()
 //Cleans up and frees allocated memory
 void exit()
 {
-	//free(fatTable);
-	//free(fileDirectory);
-	//free(dataBuffer);
+	free(fatTable);
+	free(fileDirectory);
+	free(dataBuffer);
 }
 
 // Testing filesystem functions
 int main()
 {
-	
 	int i;
-	
-	char *array1;
-	array1 = (char*) calloc(1,sizeof(char)*10);
-	array1 = "HalloHallo";
-	
-	printf("array1 stak 2: %s\n",array1);
-
-	char *array2;
-	array2 = (char*) calloc(1,sizeof(char)*11);
-	/*for (i=0; i < 10; i++)
-	{
-		array2[i]='A';
-	}*/
-
-	strncpy(array2+0*sizeof(char),array1,2);
-	strncpy(array2+2*sizeof(char),array1,4);
-
-	//array2 = array1+3*sizeof(char);
-
-	//array2[4]='\n';
-	//memcpy(array2,array1,2);
-
-	
-	
-	//+6*sizeof(char)='\n';
-
-	printf("array2 stak 2: %s\n",array2);
-	
-	
-
 	char *input;
 	input = (char*) calloc(1,sizeof(char)*2041);
 
@@ -488,8 +455,6 @@ int main()
 	printf("\npress ENTER to exit filesystem\n");
 	exit();
 	getchar();
-
-	//free(output);
 
 	return EXIT_SUCCESS;
 }
