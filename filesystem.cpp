@@ -346,8 +346,6 @@ int vread(int fd, int n, char *buffer)
 		i++;
 	}
 
-
-
 	return 0;
 }
 
@@ -426,7 +424,7 @@ void exit()
 // Testing filesystem functions
 int main()
 {
-	/*
+	
 	int i;
 	
 	char *array1;
@@ -437,12 +435,13 @@ int main()
 
 	char *array2;
 	array2 = (char*) calloc(1,sizeof(char)*11);
-	for (i=0; i < 10; i++)
+	/*for (i=0; i < 10; i++)
 	{
 		array2[i]='A';
-	}
+	}*/
 
-	strncpy(array2,array1+0*sizeof(char),2);
+	strncpy(array2+0*sizeof(char),array1,2);
+	strncpy(array2+2*sizeof(char),array1,4);
 
 	//array2 = array1+3*sizeof(char);
 
@@ -454,12 +453,16 @@ int main()
 	//+6*sizeof(char)='\n';
 
 	printf("array2 stak 2: %s\n",array2);
-	*/
+	
 	
 
 	char *input;
 	input = (char*) calloc(1,sizeof(char)*4000);
-	input = "EEEADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATA";
+
+	for (i=0; i < 30; i++)
+	{
+		input[i]='A';
+	}
 
 	char *output;
 	output = (char*) calloc(1,sizeof(char)*4000);
@@ -470,15 +473,15 @@ int main()
 	vinit("disk2.data");
 	vformat();
 
-	vsave("file1.data",4000);
+	vsave("file1.data",1024);
 	vsave("file2.data",400);
 	vsave("file3.data",400);
 	filePos = vopen("file1.data");
 	printf("File is found at: %i\n",filePos);
 	vlist();
 
-	vwrite(filePos,4000,input);
-	vread(filePos,4000,output);
+	vwrite(filePos,1024,input);
+	vread(filePos,1024,output);
 
 	printf("output : %s\n",output);
 
