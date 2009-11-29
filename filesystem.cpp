@@ -304,6 +304,49 @@ void vclose(int fd)
 
 int vread(int fd, int n, char *buffer)
 {
+	int i = 0;
+	int readFromBlock;
+	bool continueRead = true;
+
+	//check if a file is open
+	if(!fileIsOpen)
+	{
+		printf("No file is open to read from\n");
+		return -1;
+	}
+
+	//check if number of bytes in buffer is more than the size of file
+	if(fileDirectory[fd].fileSize > n)
+	{
+		printf("Dataset to read is larger than file\n");
+		return -2;
+	}
+
+	readFromBlock = fileDirectory[fd].firstBlock;
+
+	//read buffer block by block from virtual disk
+	while(continueRead)
+	{
+		//write data buffer to specified block on virtual disk
+		fseek(virtualDiskSpace,readFromBlock,SEEK_SET);
+		fread(dataBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+
+		//fill dataBuffer with first 1024 char for first block
+		strncpy(buffer+i*BLOCK_SIZE,dataBuffer,BLOCK_SIZE);
+
+		//find next block to write
+		readFromBlock = fatTable[readFromBlock].nextBlock;
+
+		//check if current block is the last block to write
+		if(readFromBlock == LAST_FAT_ENTRY)
+		{
+			continueRead = false;
+		}
+
+		i++;
+	}
+
+
 
 	return 0;
 }
@@ -331,17 +374,20 @@ int vwrite(int fd, int n, char *buffer)
 	writeToBlock = fileDirectory[fd].firstBlock;
 
 
+	//write buffer block by block to virtual disk
 	while(continueWrite)
 	{
 		//fill dataBuffer with first 1024 char for first block
 		strncpy(dataBuffer,buffer+i*BLOCK_SIZE,BLOCK_SIZE);
 
-
+		//write data buffer to specified block on virtual disk
 		fseek(virtualDiskSpace,writeToBlock,SEEK_SET);
 		fwrite(dataBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 
+		//find next block to write
 		writeToBlock = fatTable[writeToBlock].nextBlock;
 
+		//check if current block is the last block to write
 		if(writeToBlock == LAST_FAT_ENTRY)
 		{
 			continueWrite = false;
@@ -349,8 +395,6 @@ int vwrite(int fd, int n, char *buffer)
 
 		i++;
 	}
-
-
 
 	return 0;
 }
@@ -374,9 +418,9 @@ void vlist()
 //Cleans up and frees allocated memory
 void exit()
 {
-	free(fatTable);
-	free(fileDirectory);
-	free(dataBuffer);
+	//free(fatTable);
+	//free(fileDirectory);
+	//free(dataBuffer);
 }
 
 // Testing filesystem functions
@@ -413,8 +457,12 @@ int main()
 	*/
 	
 
-	char *array1;
-	array1 = (char*) calloc(1,sizeof(char)*4000);
+	char *input;
+	input = (char*) calloc(1,sizeof(char)*4000);
+	input = "EEEADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATADATA";
+
+	char *output;
+	output = (char*) calloc(1,sizeof(char)*4000);
 
 	int filePos = -1;
 
@@ -429,12 +477,16 @@ int main()
 	printf("File is found at: %i\n",filePos);
 	vlist();
 
-	vwrite(filePos,4000,array1);
+	vwrite(filePos,4000,input);
+	vread(filePos,4000,output);
 
-
+	printf("output : %s\n",output);
 
 	printf("\npress ENTER to exit filesystem\n");
 	exit();
 	getchar();
+
+	//free(output);
+
 	return EXIT_SUCCESS;
 }
