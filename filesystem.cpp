@@ -457,15 +457,15 @@ int main()
 	
 
 	char *input;
-	input = (char*) calloc(1,sizeof(char)*4000);
+	input = (char*) calloc(1,sizeof(char)*2041);
 
-	for (i=0; i < 30; i++)
+	for (i=0; i < 2040; i++)
 	{
 		input[i]='A';
 	}
 
 	char *output;
-	output = (char*) calloc(1,sizeof(char)*4000);
+	output = (char*) calloc(1,sizeof(char)*2041);
 
 	int filePos = -1;
 
@@ -473,15 +473,15 @@ int main()
 	vinit("disk2.data");
 	vformat();
 
-	vsave("file1.data",1024);
+	vsave("file1.data",2040);
 	vsave("file2.data",400);
 	vsave("file3.data",400);
 	filePos = vopen("file1.data");
 	printf("File is found at: %i\n",filePos);
 	vlist();
 
-	vwrite(filePos,1024,input);
-	vread(filePos,1024,output);
+	vwrite(filePos,2040,input);
+	vread(filePos,2040,output);
 
 	printf("output : %s\n",output);
 
