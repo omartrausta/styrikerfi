@@ -260,7 +260,19 @@ bool vsave(char *filename, int filesize)
 	//fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	readDir();
 
+	//check if file already exists with same filename
+	for(j=0;j < MAX_FILES; j++)
+	{
+		if(strcmp(fileDirectory[j].name,filename) == 0)
+		{
+			printf("filename already exists\n");
+			return false;
+		}
+	}
+
+
 	//find first empty file directory element
+	j = 0;
 	while (j < MAX_FILES && fileDirEntryNotFound)
 	{
 		if(fileDirectory[j].firstBlock == EMPTY_ENTRY)
@@ -327,6 +339,7 @@ bool vsave(char *filename, int filesize)
 // Close a open file, save changes to virtual disk
 void vclose(int fd)
 {
+	fileIsOpen = false;
 
 
 }
@@ -346,8 +359,17 @@ int vwrite(int fd, int n, char *buffer)
 // Displays all filenames in filesystem
 void vlist()
 {
+	int i;
 
+	printf("Files saved in filesystem:\n\n");
 
+	for(i=0;i < MAX_FILES; i++)
+	{
+		if(fileDirectory[i].firstBlock != EMPTY_ENTRY)
+		{
+			printf("%s\n",fileDirectory[i].name);
+		}
+	} 
 }
 
 //Cleans up and frees allocated memory
@@ -397,16 +419,17 @@ int main()
 
 
 
-	printf("starting main\n");
+	printf("starting filesystem\n");
 	vinit("disk2.data");
-	//vformat();
+	vformat();
 
-	//vsave("file1.data",4000);
-	//vsave("file2.data",400);
-	//vsave("file3.data",400);
+	vsave("file1.data",4000);
+	vsave("file2.data",400);
+	vsave("file3.data",400);
 	filePos = vopen("file3.data");
 	printf("File is found at: %i\n",filePos);
-	printf("press ENTER to exit main\n");
+	vlist();
+	printf("\npress ENTER to exit filesystem\n");
 	exit();
 	getchar();
 	return EXIT_SUCCESS;
