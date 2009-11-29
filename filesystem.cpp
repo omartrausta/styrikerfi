@@ -117,8 +117,10 @@ void vformat()
 // Opens a saved file on the virtual disk and prepares for reading or writing
 int vopen(char* filename)
 {
-	int i=2;
+	int i=0;
+	int fileNumber;
 	bool fileNotFound = true;
+	fileEntry *fileDirectoryBuffer;
 
 	if(virtualDiskSpace == NULL)
 	{
@@ -130,20 +132,41 @@ int vopen(char* filename)
 		printf("A file is already open, please close current open file\n");
 		return -2;
 	}
+
+	//open file directory saved on virtual disk
+	fileDirectoryBuffer = (fileEntry*) calloc(1,sizeof(fileEntry)*MAX_FILES);
+	fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	fread(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
 	
 
-	//check if filenname is found if file dierectory
+	//check if filenname is found in file dierectory
 	while(i < MAX_FILES && fileNotFound)
 	{
-		if(strcmp(fileDirectory[i].name,filename))
+		if(strcmp(fileDirectoryBuffer[i].name,filename) == 0)
 		{
-			printf("file %s found\n",fileDirectory[i].name,filename);
+			//printf("file %s found\n",fileDirectoryBuffer[i].name);
+			fileNumber = i;
 			fileNotFound = false;			
 		}
 		i++;
 	}
+	
 
-	return i;
+	if(fileNotFound)
+	{
+		printf("File could not be found\n");
+		return -3;
+	}
+
+	//fseek(virtualDiskSpace,1*BLOCK_SIZE,SEEK_SET);
+	//fwrite(fileDirectoryBuffer,BLOCK_SIZE,1,virtualDiskSpace);
+
+	//DEV NOTE: VISUAL STUDIO MAY THROW BREAKBPOINT, CONTINUE WILL COMPLETE PROGRAM RUN SUCCESSFULLY
+	//free(fileDirectoryBuffer);
+
+	//return file number reference for location of file within filesystem, mark file as open
+	fileIsOpen = true;
+	return fileNumber;
 	
 }
 
@@ -315,6 +338,7 @@ int main()
 	*/
 
 
+	int filePos = -1;
 
 
 
@@ -322,12 +346,14 @@ int main()
 
 
 	printf("starting main\n");
-	vinit("disk.data");
+	//vinit("disk.data");
 	vformat();
 	//vopen("file.data");
 	vsave("file1.data",4000);
 	vsave("file2.data",400);
 	vsave("file3.data",400);
+	filePos = vopen("file4.data");
+	printf("File is found at: %i\n",filePos);
 	printf("press ENTER to exit main\n");
 	getchar();
 	return EXIT_SUCCESS;
